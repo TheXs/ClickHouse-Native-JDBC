@@ -15,7 +15,7 @@
 package com.github.housepower.jdbc.data;
 
 import com.github.housepower.jdbc.ClickHouseStruct;
-import com.github.housepower.jdbc.data.type.complex.DataTypeMap;
+import com.github.housepower.jdbc.data.type.complex.DataTypeTuple;
 import com.github.housepower.jdbc.serde.BinarySerializer;
 
 import java.io.IOException;
@@ -26,7 +26,7 @@ public class ColumnMap extends AbstractColumn {
     // data represents nested column in ColumnArray
     private final IColumn[] columnDataArray;
 
-    public ColumnMap(String name, DataTypeMap type, Object[] values) {
+    public ColumnMap(String name, DataTypeTuple type, Object[] values) {
         super(name, type, values);
 
         IDataType[] types = type.getNestedTypes();

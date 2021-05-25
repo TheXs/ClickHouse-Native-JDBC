@@ -17,7 +17,7 @@ public class MapTest {
             final PreparedStatement prepareStatement = connection.prepareStatement("select kv from map");
             final ResultSet resultSet = prepareStatement.executeQuery();
             while (resultSet.next()) {
-                Object dataMap = resultSet.getObject(0);
+                Object dataMap = resultSet.getObject(1);
                 System.out.println(dataMap);
             }
         } catch (Exception e) {

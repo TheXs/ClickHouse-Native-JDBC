@@ -23,6 +23,7 @@ import com.github.housepower.jdbc.serde.BinaryDeserializer;
 import com.github.housepower.jdbc.serde.BinarySerializer;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.sql.SQLException;
 import java.sql.Struct;
 import java.sql.Types;
@@ -40,27 +41,29 @@ public class DataTypeMap implements IDataType {
             char delimiter = lexer.character();
             Validate.isTrue(delimiter == ',' || delimiter == ')');
             if (delimiter == ')') {
-                StringBuilder builder = new StringBuilder("Map(");
+                StringBuilder builder = new StringBuilder("Map(Tuple(");
                 for (int i = 0; i < nestedDataTypes.size(); i++) {
                     if (i > 0)
                         builder.append(",");
                     builder.append(nestedDataTypes.get(i).name());
                 }
-                return new DataTypeMap(builder.append(")").toString(), nestedDataTypes.toArray(new IDataType[0]));
+                return new DataTypeMap(builder.append("))").toString(),
+                        new DataTypeTuple("Tuple(", nestedDataTypes.toArray(new IDataType[0])),
+                        DataTypeFactory.get("UInt64", serverContext));
             }
         }
     };
 
-    public IDataType[] getNestedTypes() {
-        return nestedTypes;
-    }
-
     private final String name;
+    private final DataTypeTuple dataTypeTuple;
     private final IDataType[] nestedTypes;
+    private final IDataType offsetIDataType;
 
-    public DataTypeMap(String name, IDataType[] nestedTypes) {
+    public DataTypeMap(String name, DataTypeTuple dataTypeTuple,IDataType offsetIDataType) {
         this.name = name;
-        this.nestedTypes = nestedTypes;
+        this.dataTypeTuple = dataTypeTuple;
+        this.nestedTypes = dataTypeTuple.getNestedTypes();
+        this.offsetIDataType = offsetIDataType;
     }
 
     @Override
@@ -75,11 +78,7 @@ public class DataTypeMap implements IDataType {
 
     @Override
     public Object defaultValue() {
-        Object[] attrs = new Object[nestedTypes.length];
-        for (int i = 0; i < nestedTypes.length; i++) {
-            attrs[i] = nestedTypes[i].defaultValue();
-        }
-        return new ClickHouseStruct("Map", attrs);
+        return null;
     }
 
     @Override
@@ -104,65 +103,59 @@ public class DataTypeMap implements IDataType {
 
     @Override
     public void serializeBinary(Object data, BinarySerializer serializer) throws SQLException, IOException {
-        for (int i = 0; i < nestedTypes.length; i++) {
-            nestedTypes[i].serializeBinary(((Struct) data).getAttributes()[i], serializer);
-        }
     }
 
     @Override
     public Object deserializeBinary(BinaryDeserializer deserializer) throws SQLException, IOException {
-        Object[] attrs = new Object[nestedTypes.length];
-        for (int i = 0; i < nestedTypes.length; i++) {
-            attrs[i] = nestedTypes[i].deserializeBinary(deserializer);
+        Object[] attrs = new Object[dataTypeTuple.getNestedTypes().length];
+        for (int i = 0; i < dataTypeTuple.getNestedTypes().length; i++) {
+            attrs[i] = dataTypeTuple.getNestedTypes()[i].deserializeBinary(deserializer);
         }
         return new ClickHouseStruct("Map", attrs);
     }
 
     @Override
     public void serializeBinaryBulk(Object[] data, BinarySerializer serializer) throws SQLException, IOException {
-        for (int i = 0; i < nestedTypes.length; i++) {
-            Object[] elemsData = new Object[data.length];
-            for (int row = 0; row < data.length; row++) {
-                elemsData[row] = ((Struct) data[row]).getAttributes()[i];
-            }
-            nestedTypes[i].serializeBinaryBulk(elemsData, serializer);
-        }
+
     }
 
     @Override
     public Object[] deserializeBinaryBulk(int rows, BinaryDeserializer deserializer) throws SQLException, IOException {
-        Object[][] rowsWithElems = getRowsWithElems(rows, deserializer);
+        boolean readData = rows > 0;
+        if (!readData) {
+            return new Struct[0];
+        }
+        final int offset = ((BigInteger)offsetIDataType.deserializeBinary(deserializer)).intValue();
+        Object[] keys = readKeyList(true, rows, deserializer, offset);
+        Object[] values = readKeyList(false, rows, deserializer, offset);
 
         Struct[] rowsData = new Struct[rows];
         for (int row = 0; row < rows; row++) {
-            Object[] elemsData = new Object[nestedTypes.length];
+            Object[][] elemsData = new Object[offset][2];
 
-            for (int elemIndex = 0; elemIndex < nestedTypes.length; elemIndex++) {
-                elemsData[elemIndex] = rowsWithElems[elemIndex][row];
+            for (int elemIndex = 0; elemIndex < offset; elemIndex++) {
+                elemsData[elemIndex] = new Object[]{keys[elemIndex], values[elemIndex]};
             }
             rowsData[row] = new ClickHouseStruct("Map", elemsData);
         }
         return rowsData;
     }
 
-    private Object[][] getRowsWithElems(int rows, BinaryDeserializer deserializer) throws IOException, SQLException {
-        Object[][] rowsWithElems = new Object[nestedTypes.length][];
-        for (int index = 0; index < nestedTypes.length; index++) {
-            rowsWithElems[index] = nestedTypes[index].deserializeBinaryBulk(rows, deserializer);
+    private Object[] readKeyList(boolean key, int rows, BinaryDeserializer deserializer, int offset)
+            throws IOException, SQLException {
+        Object[] rowsWithElems = new Object[offset];
+        for (int index = 0; index < offset; index++) {
+            rowsWithElems[index] = nestedTypes[key ? 0 : 1].deserializeBinaryBulk(rows, deserializer);
         }
         return rowsWithElems;
     }
 
     @Override
     public Object deserializeTextQuoted(SQLLexer lexer) throws SQLException {
-        Validate.isTrue(lexer.character() == '(');
-        Object[] tupleData = new Object[nestedTypes.length];
-        for (int i = 0; i < nestedTypes.length; i++) {
-            if (i > 0)
-                Validate.isTrue(lexer.character() == ',');
-            tupleData[i] = nestedTypes[i].deserializeTextQuoted(lexer);
-        }
-        Validate.isTrue(lexer.character() == ')');
-        return new ClickHouseStruct("Map", tupleData);
+        return null;
+    }
+
+    public DataTypeTuple getDataTypeTuple() {
+        return dataTypeTuple;
     }
 }

@@ -32,7 +32,7 @@ public class ColumnFactory {
             if (type.name().startsWith("Tuple")) {
                 return new ColumnTuple(name, (DataTypeTuple) type, values);
             } else if (type.name().startsWith("Map")) {
-                return new ColumnMap(name, (DataTypeMap) type, values);
+                return new ColumnMap(name, ((DataTypeMap) type).getDataTypeTuple(), values);
             }
         }
         return new Column(name, type, values);
