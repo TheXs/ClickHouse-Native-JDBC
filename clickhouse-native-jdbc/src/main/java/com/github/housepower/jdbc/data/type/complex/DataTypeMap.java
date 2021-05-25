@@ -126,8 +126,8 @@ public class DataTypeMap implements IDataType {
             return new Struct[0];
         }
         final int offset = ((BigInteger)offsetIDataType.deserializeBinary(deserializer)).intValue();
-        Object[] keys = readKeyList(true, rows, deserializer, offset);
-        Object[] values = readKeyList(false, rows, deserializer, offset);
+        Object[] keys = readValueList(true, rows, deserializer, offset);
+        Object[] values = readValueList(false, rows, deserializer, offset);
 
         Struct[] rowsData = new Struct[rows];
         for (int row = 0; row < rows; row++) {
@@ -141,7 +141,7 @@ public class DataTypeMap implements IDataType {
         return rowsData;
     }
 
-    private Object[] readKeyList(boolean key, int rows, BinaryDeserializer deserializer, int offset)
+    private Object[] readValueList(boolean key, int rows, BinaryDeserializer deserializer, int offset)
             throws IOException, SQLException {
         Object[] rowsWithElems = new Object[offset];
         for (int index = 0; index < offset; index++) {
