@@ -1,10 +1,6 @@
 package examples;
 
 import com.github.housepower.jdbc.ClickHouseStruct;
-import com.github.housepower.jdbc.data.ColumnMap;
-import com.github.housepower.jdbc.data.IDataType;
-import com.github.housepower.jdbc.data.type.complex.DataTypeString;
-import com.github.housepower.jdbc.data.type.complex.DataTypeTuple;
 import org.junit.jupiter.api.Test;
 
 import java.sql.*;
@@ -12,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 public class MapTest {
 
