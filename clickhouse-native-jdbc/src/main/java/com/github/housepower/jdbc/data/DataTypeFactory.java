@@ -29,18 +29,7 @@ import com.github.housepower.jdbc.data.type.DataTypeInt32;
 import com.github.housepower.jdbc.data.type.DataTypeInt64;
 import com.github.housepower.jdbc.data.type.DataTypeInt8;
 import com.github.housepower.jdbc.data.type.DataTypeUUID;
-import com.github.housepower.jdbc.data.type.complex.DataTypeArray;
-import com.github.housepower.jdbc.data.type.complex.DataTypeCreator;
-import com.github.housepower.jdbc.data.type.complex.DataTypeDateTime;
-import com.github.housepower.jdbc.data.type.complex.DataTypeDateTime64;
-import com.github.housepower.jdbc.data.type.complex.DataTypeDecimal;
-import com.github.housepower.jdbc.data.type.complex.DataTypeEnum16;
-import com.github.housepower.jdbc.data.type.complex.DataTypeEnum8;
-import com.github.housepower.jdbc.data.type.complex.DataTypeFixedString;
-import com.github.housepower.jdbc.data.type.complex.DataTypeNothing;
-import com.github.housepower.jdbc.data.type.complex.DataTypeNullable;
-import com.github.housepower.jdbc.data.type.complex.DataTypeString;
-import com.github.housepower.jdbc.data.type.complex.DataTypeTuple;
+import com.github.housepower.jdbc.data.type.complex.*;
 import com.github.housepower.jdbc.misc.LRUCache;
 import com.github.housepower.jdbc.misc.SQLLexer;
 import com.github.housepower.jdbc.misc.Validate;
@@ -91,6 +80,8 @@ public class DataTypeFactory {
             return DataTypeString.CREATOR.createDataType(lexer, serverContext);
         } else if (dataTypeName.equalsIgnoreCase("Nothing")) {
             return DataTypeNothing.CREATOR.createDataType(lexer, serverContext);
+        } else if (dataTypeName.equalsIgnoreCase("Map")) {
+            return DataTypeMap.creator.createDataType(lexer, serverContext);
         } else {
             IDataType dataType = dataTypes.get(dataTypeName.toLowerCase(Locale.ROOT));
             Validate.isTrue(dataType != null, "Unknown data type: " + dataTypeName);
