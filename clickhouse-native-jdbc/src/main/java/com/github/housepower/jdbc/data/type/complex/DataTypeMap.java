@@ -29,6 +29,7 @@ import java.sql.Struct;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class DataTypeMap implements IDataType {
 
@@ -128,14 +129,20 @@ public class DataTypeMap implements IDataType {
         if (!readData) {
             return new Struct[0];
         }
-        final int offset = ((BigInteger)offsetIDataType.deserializeBinary(deserializer)).intValue();
-        Object[] keys = readValueList(true, rows, deserializer, offset);
-        Object[] values = readValueList(false, rows, deserializer, offset);
+        final List<Integer> offsetList = new ArrayList<>(rows);
+        for (int i = 0; i < rows; i++) {
+            final int offset = ((BigInteger) offsetIDataType.deserializeBinary(deserializer)).intValue();
+            offsetList.add(offsetList.isEmpty() ? offset : offset - offsetList.stream()
+                    .reduce(0, Integer::sum));
+        }
 
-        Struct[] rowsData = new Struct[rows];
+        final Struct[] rowsData = new Struct[rows];
         for (int row = 0; row < rows; row++) {
-            Object[][] elemsData = new Object[offset][2];
+            final int offset = offsetList.get(row);
+            Object[] keys = readValueList(true, rows, deserializer, offset);
+            Object[] values = readValueList(false, rows, deserializer, offset);
 
+            Object[][] elemsData = new Object[offset][2];
             for (int elemIndex = 0; elemIndex < offset; elemIndex++) {
                 elemsData[elemIndex] = new Object[]{keys[elemIndex], values[elemIndex]};
             }
@@ -148,7 +155,7 @@ public class DataTypeMap implements IDataType {
             throws IOException, SQLException {
         Object[] rowsWithElems = new Object[offset];
         for (int index = 0; index < offset; index++) {
-            rowsWithElems[index] = nestedTypes[key ? 0 : 1].deserializeBinaryBulk(rows, deserializer);
+            rowsWithElems[index] = nestedTypes[key ? 0 : 1].deserializeBinaryBulk(1, deserializer);
         }
         return rowsWithElems;
     }
