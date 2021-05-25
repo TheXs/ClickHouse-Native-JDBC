@@ -14,6 +14,7 @@
 
 package com.github.housepower.jdbc.data.type.complex;
 
+import com.github.housepower.jdbc.ClickHouseArray;
 import com.github.housepower.jdbc.ClickHouseStruct;
 import com.github.housepower.jdbc.data.DataTypeFactory;
 import com.github.housepower.jdbc.data.IDataType;
@@ -127,28 +128,19 @@ public class DataTypeMap implements IDataType {
     public Object[] deserializeBinaryBulk(int rows, BinaryDeserializer deserializer) throws SQLException, IOException {
         boolean readData = rows > 0;
         if (!readData) {
-            return new Struct[0];
+            return new ClickHouseArray[0];
         }
-        final List<Integer> offsetList = new ArrayList<>(rows);
-        for (int i = 0; i < rows; i++) {
-            final int offset = ((BigInteger) offsetIDataType.deserializeBinary(deserializer)).intValue();
-            offsetList.add(offsetList.isEmpty() ? offset : offset - offsetList.stream()
-                    .reduce(0, Integer::sum));
-        }
-
-        final Struct[] rowsData = new Struct[rows];
+        final ClickHouseArray[] result = new ClickHouseArray[rows];
+        Object [] offsets = offsetIDataType.deserializeBinaryBulk(rows, deserializer);
+        int lastReadOffset = 0;
         for (int row = 0; row < rows; row++) {
-            final int offset = offsetList.get(row);
-            Object[] keys = readValueList(true, rows, deserializer, offset);
-            Object[] values = readValueList(false, rows, deserializer, offset);
-
-            Object[][] elemsData = new Object[offset][2];
-            for (int elemIndex = 0; elemIndex < offset; elemIndex++) {
-                elemsData[elemIndex] = new Object[]{keys[elemIndex], values[elemIndex]};
-            }
-            rowsData[row] = new ClickHouseStruct("Map", elemsData);
+            final int offset = ((BigInteger) offsets[row]).intValue();
+            result[row] = new ClickHouseArray(dataTypeTuple,
+                    dataTypeTuple.deserializeBinaryBulk(
+                            offset - lastReadOffset, deserializer));
+            lastReadOffset = offset;
         }
-        return rowsData;
+        return result;
     }
 
     private Object[] readValueList(boolean key, int rows, BinaryDeserializer deserializer, int offset)

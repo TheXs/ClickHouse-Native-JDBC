@@ -54,15 +54,25 @@ public class MapTest {
 
         final List<Object[][]> dataList = new ArrayList<>();
         dataList.add(new Object[][] {new Object[]{"name", "test"},
-                new Object[]{"id", String.valueOf(random.nextInt(100))}});
+                new Object[]{"id", String.valueOf(random.nextInt(100))},
+                new Object[]{"s", String.valueOf(random.nextInt(100))},
+                new Object[]{"z", String.valueOf(random.nextInt(100))}});
         dataList.add(new Object[][] {new Object[]{"name", "test"},
-                new Object[]{"id", String.valueOf(random.nextInt(100))}});
+                new Object[]{"id", String.valueOf(random.nextInt(100))},
+                new Object[]{"s", String.valueOf(random.nextInt(100))},
+                new Object[]{"z", String.valueOf(random.nextInt(100))}});
         dataList.add(new Object[][] {new Object[]{"name", "test"},
-                new Object[]{"id", String.valueOf(random.nextInt(100))}});
+                new Object[]{"id", String.valueOf(random.nextInt(100))},
+                new Object[]{"s", String.valueOf(random.nextInt(100))},
+                new Object[]{"z", String.valueOf(random.nextInt(100))}});
         dataList.add(new Object[][] {new Object[]{"name", "test"},
-                new Object[]{"id", String.valueOf(random.nextInt(100))}});
+                new Object[]{"id", String.valueOf(random.nextInt(100))},
+                new Object[]{"s", String.valueOf(random.nextInt(100))},
+                new Object[]{"z", String.valueOf(random.nextInt(100))}});
         dataList.add(new Object[][] {new Object[]{"name", "test"},
-                new Object[]{"id", String.valueOf(random.nextInt(100))}});
+                new Object[]{"id", String.valueOf(random.nextInt(100))},
+                new Object[]{"s", String.valueOf(random.nextInt(100))},
+                new Object[]{"z", String.valueOf(random.nextInt(100))}});
         try (final Connection connection =
                      DriverManager.getConnection("jdbc:clickhouse://192.168.30.12:9000")) {
             final PreparedStatement prepareStatement =
