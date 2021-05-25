@@ -25,15 +25,12 @@ import java.util.List;
 
 public class ColumnMap extends AbstractColumn {
 
-    private final List<Long> offsets;
-
     private final List<Object[][]> data;
 
     private final DataTypeTuple dataTypeTuple;
 
     public ColumnMap(String name,DataTypeTuple type, Object[] values) {
         super(name, type, values);
-        offsets = new ArrayList<>();
         data = new ArrayList<>();
         dataTypeTuple = type;
     }
@@ -42,7 +39,6 @@ public class ColumnMap extends AbstractColumn {
     public void write(Object object) throws IOException, SQLException {
         ClickHouseStruct tuple = (ClickHouseStruct) object;
         Object[][] dataArr = (Object[][]) tuple.getAttributes();
-        offsets.add(offsets.isEmpty() ? dataArr.length : offsets.get((offsets.size() - 1)) + dataArr.length);
         data.add(dataArr);
     }
 
@@ -54,7 +50,9 @@ public class ColumnMap extends AbstractColumn {
         }
 
         // 偏移
-        for (long offset : offsets) {
+        int offset = 0;
+        for (Object[][] dataArr : data) {
+            offset += dataArr.length;
             serializer.writeLong(offset);
         }
         // Tuple
@@ -72,12 +70,7 @@ public class ColumnMap extends AbstractColumn {
     }
 
     @Override
-    public void setColumnWriterBuffer(ColumnWriterBuffer buffer) {
-        super.setColumnWriterBuffer(buffer);
-    }
-
-    @Override
     public void clear() {
-        offsets.clear();
+        data.clear();
     }
 }
