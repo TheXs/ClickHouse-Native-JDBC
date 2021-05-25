@@ -48,7 +48,10 @@ public class DataTypeMap implements IDataType {
                     builder.append(nestedDataTypes.get(i).name());
                 }
                 return new DataTypeMap(builder.append("))").toString(),
-                        new DataTypeTuple("Tuple(", nestedDataTypes.toArray(new IDataType[0])),
+                        new DataTypeTuple("Map("+nestedDataTypes.get(0).name()
+                                +","
+                                +nestedDataTypes.get(1).name() + ")",
+                                nestedDataTypes.toArray(new IDataType[0])),
                         DataTypeFactory.get("UInt64", serverContext));
             }
         }
