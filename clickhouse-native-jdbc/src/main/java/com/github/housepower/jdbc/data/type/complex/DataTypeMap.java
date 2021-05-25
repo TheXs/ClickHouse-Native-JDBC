@@ -15,7 +15,6 @@
 package com.github.housepower.jdbc.data.type.complex;
 
 import com.github.housepower.jdbc.ClickHouseArray;
-import com.github.housepower.jdbc.ClickHouseStruct;
 import com.github.housepower.jdbc.data.DataTypeFactory;
 import com.github.housepower.jdbc.data.IDataType;
 import com.github.housepower.jdbc.misc.SQLLexer;
@@ -60,14 +59,12 @@ public class DataTypeMap implements IDataType {
 
     private final String name;
     private final DataTypeTuple dataTypeTuple;
-    private final IDataType[] nestedTypes;
-    private final IDataType offsetIDataType;
+    private final IDataType offsetType;
 
-    public DataTypeMap(String name, DataTypeTuple dataTypeTuple,IDataType offsetIDataType) {
+    public DataTypeMap(String name, DataTypeTuple dataTypeTuple,IDataType offsetType) {
         this.name = name;
         this.dataTypeTuple = dataTypeTuple;
-        this.nestedTypes = dataTypeTuple.getNestedTypes();
-        this.offsetIDataType = offsetIDataType;
+        this.offsetType = offsetType;
     }
 
     @Override
@@ -126,7 +123,7 @@ public class DataTypeMap implements IDataType {
             return new ClickHouseArray[0];
         }
         final ClickHouseArray[] result = new ClickHouseArray[rows];
-        Object [] offsets = offsetIDataType.deserializeBinaryBulk(rows, deserializer);
+        Object [] offsets = offsetType.deserializeBinaryBulk(rows, deserializer);
         int lastReadOffset = 0;
         for (int row = 0; row < rows; row++) {
             final int offset = ((BigInteger) offsets[row]).intValue();

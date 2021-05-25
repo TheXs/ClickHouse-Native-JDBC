@@ -54,8 +54,8 @@ public class ColumnMap extends AbstractColumn {
         }
 
         // 偏移
-        for (long offsetList : offsets) {
-            serializer.writeLong(offsetList);
+        for (long offset : offsets) {
+            serializer.writeLong(offset);
         }
         // Tuple
         for (Object[][] dataArr : data) {
