@@ -27,29 +27,23 @@ public class ColumnMap extends AbstractColumn {
 
     private final List<Long> offsets;
 
-    private final IColumn keyColumn;
+    private final List<Object[][]> data;
 
-    private final IColumn valueColumn;
+    private final DataTypeTuple dataTypeTuple;
 
-    public ColumnMap(String name, DataTypeTuple type, Object[] values) {
+    public ColumnMap(String name,DataTypeTuple type, Object[] values) {
         super(name, type, values);
         offsets = new ArrayList<>();
-        IDataType[] types = type.getNestedTypes();
-        keyColumn = ColumnFactory.createColumn(null, types[0], null);
-        valueColumn = ColumnFactory.createColumn(null, types[1], null);
+        data = new ArrayList<>();
+        dataTypeTuple = type;
     }
 
     @Override
     public void write(Object object) throws IOException, SQLException {
         ClickHouseStruct tuple = (ClickHouseStruct) object;
-        Object[][] data = (Object[][]) tuple.getAttributes();
-        offsets.add(offsets.isEmpty() ? data.length : offsets.get((offsets.size() - 1)) + data.length);
-        for (Object[] entry : data) {
-            keyColumn.write(entry[0]);
-        }
-        for (Object[] entry : data) {
-            valueColumn.write(entry[1]);
-        }
+        Object[][] dataArr = (Object[][]) tuple.getAttributes();
+        offsets.add(offsets.isEmpty() ? dataArr.length : offsets.get((offsets.size() - 1)) + dataArr.length);
+        data.add(dataArr);
     }
 
     @Override
@@ -59,32 +53,31 @@ public class ColumnMap extends AbstractColumn {
             serializer.writeUTF8StringBinary(type.name());
         }
 
-        flushOffsets(serializer);
-        keyColumn.flushToSerializer(serializer, false);
-        valueColumn.flushToSerializer(serializer, false);
-
-        if (immediate) {
-            buffer.writeTo(serializer);
-        }
-    }
-
-    public void flushOffsets(BinarySerializer serializer) throws IOException, SQLException {
+        // 偏移
         for (long offsetList : offsets) {
             serializer.writeLong(offsetList);
+        }
+        // Tuple
+        for (Object[][] dataArr : data) {
+            ClickHouseStruct [] dataBulk = new ClickHouseStruct[dataArr.length];
+            int index = 0;
+            for (Object[] data : dataArr) {
+                dataBulk [index++] = new ClickHouseStruct("Tuple", data);
+            }
+            dataTypeTuple.serializeBinaryBulk(dataBulk, serializer);
+        }
+        if (immediate) {
+            buffer.writeTo(serializer);
         }
     }
 
     @Override
     public void setColumnWriterBuffer(ColumnWriterBuffer buffer) {
         super.setColumnWriterBuffer(buffer);
-        keyColumn.setColumnWriterBuffer(buffer);
-        valueColumn.setColumnWriterBuffer(buffer);
     }
 
     @Override
     public void clear() {
         offsets.clear();
-        keyColumn.clear();
-        valueColumn.clear();
     }
 }

@@ -30,7 +30,6 @@ import java.sql.Struct;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class DataTypeMap implements IDataType {
 
@@ -112,11 +111,7 @@ public class DataTypeMap implements IDataType {
 
     @Override
     public Object deserializeBinary(BinaryDeserializer deserializer) throws SQLException, IOException {
-        Object[] attrs = new Object[dataTypeTuple.getNestedTypes().length];
-        for (int i = 0; i < dataTypeTuple.getNestedTypes().length; i++) {
-            attrs[i] = dataTypeTuple.getNestedTypes()[i].deserializeBinary(deserializer);
-        }
-        return new ClickHouseStruct("Map", attrs);
+        return new Object[]{};
     }
 
     @Override
@@ -141,15 +136,6 @@ public class DataTypeMap implements IDataType {
             lastReadOffset = offset;
         }
         return result;
-    }
-
-    private Object[] readValueList(boolean key, int rows, BinaryDeserializer deserializer, int offset)
-            throws IOException, SQLException {
-        Object[] rowsWithElems = new Object[offset];
-        for (int index = 0; index < offset; index++) {
-            rowsWithElems[index] = nestedTypes[key ? 0 : 1].deserializeBinaryBulk(1, deserializer);
-        }
-        return rowsWithElems;
     }
 
     @Override
