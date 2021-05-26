@@ -14,6 +14,7 @@
 
 package com.github.housepower.jdbc.data;
 
+import com.github.housepower.jdbc.ClickHouseTypes;
 import com.github.housepower.jdbc.data.type.complex.DataTypeArray;
 import com.github.housepower.jdbc.data.type.complex.DataTypeMap;
 import com.github.housepower.jdbc.data.type.complex.DataTypeNullable;
@@ -25,7 +26,7 @@ public class ColumnFactory {
 
     public static IColumn createColumn(String name, IDataType type, Object[] values) {
         if (type.sqlTypeId() == Types.ARRAY) {
-            if (type.sqlTypeTypeId() == 1) {
+            if (type.sqlTypeTypeId() == ClickHouseTypes.MAP) {
                 return new ColumnArray(name, ((DataTypeMap) type).arrayType(), values);
             }
             return new ColumnArray(name, (DataTypeArray) type, values);

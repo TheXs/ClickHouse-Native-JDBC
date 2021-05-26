@@ -15,6 +15,7 @@
 package com.github.housepower.jdbc.data.type.complex;
 
 import com.github.housepower.jdbc.ClickHouseArray;
+import com.github.housepower.jdbc.ClickHouseTypes;
 import com.github.housepower.jdbc.data.DataTypeFactory;
 import com.github.housepower.jdbc.data.IDataType;
 import com.github.housepower.jdbc.misc.SQLLexer;
@@ -76,7 +77,7 @@ public class DataTypeMap implements IDataType {
 
     @Override
     public int sqlTypeTypeId() {
-        return 1;
+        return ClickHouseTypes.MAP;
     }
 
     @Override
@@ -110,7 +111,7 @@ public class DataTypeMap implements IDataType {
 
     @Override
     public Object deserializeBinary(BinaryDeserializer deserializer) throws SQLException, IOException {
-        return new Object[]{};
+        return null;
     }
 
     @Override
