@@ -25,15 +25,14 @@ public class ColumnFactory {
 
     public static IColumn createColumn(String name, IDataType type, Object[] values) {
         if (type.sqlTypeId() == Types.ARRAY) {
+            if (type.sqlTypeTypeId() == 1) {
+                return new ColumnArray(name, ((DataTypeMap) type).arrayType(), values);
+            }
             return new ColumnArray(name, (DataTypeArray) type, values);
         } else if (type.nullable()) {
             return new ColumnNullable(name, (DataTypeNullable) type, values);
         } else if (type.sqlTypeId() == Types.STRUCT) {
-            if (type.name().startsWith("Tuple")) {
-                return new ColumnTuple(name, (DataTypeTuple) type, values);
-            } else if (type.name().startsWith("Map")) {
-                return new ColumnMap(name, ((DataTypeMap) type).getDataTypeTuple(), values);
-            }
+            return new ColumnTuple(name, (DataTypeTuple) type, values);
         }
         return new Column(name, type, values);
     }

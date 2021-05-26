@@ -23,7 +23,6 @@ import com.github.housepower.jdbc.serde.BinaryDeserializer;
 import com.github.housepower.jdbc.serde.BinarySerializer;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.sql.SQLException;
 import java.sql.Struct;
 import java.sql.Types;
@@ -41,30 +40,28 @@ public class DataTypeMap implements IDataType {
             char delimiter = lexer.character();
             Validate.isTrue(delimiter == ',' || delimiter == ')');
             if (delimiter == ')') {
-                StringBuilder builder = new StringBuilder("Map(Tuple(");
+                StringBuilder builder = new StringBuilder("Map(");
                 for (int i = 0; i < nestedDataTypes.size(); i++) {
                     if (i > 0)
                         builder.append(",");
                     builder.append(nestedDataTypes.get(i).name());
                 }
-                return new DataTypeMap(builder.append("))").toString(),
-                        new DataTypeTuple("Map("+nestedDataTypes.get(0).name()
-                                +","
-                                +nestedDataTypes.get(1).name() + ")",
+                final String mapType = builder.append(")").toString();
+                return new DataTypeMap(mapType,
+                        new DataTypeArray(mapType,
+                                new DataTypeTuple("Tuple",
                                 nestedDataTypes.toArray(new IDataType[0])),
-                        DataTypeFactory.get("UInt64", serverContext));
+                                DataTypeFactory.get("UInt64", serverContext)));
             }
         }
     };
 
     private final String name;
-    private final DataTypeTuple dataTypeTuple;
-    private final IDataType offsetType;
+    private final DataTypeArray nested;
 
-    public DataTypeMap(String name, DataTypeTuple dataTypeTuple,IDataType offsetType) {
+    public DataTypeMap(String name, DataTypeArray nested) {
         this.name = name;
-        this.dataTypeTuple = dataTypeTuple;
-        this.offsetType = offsetType;
+        this.nested = nested;
     }
 
     @Override
@@ -74,7 +71,12 @@ public class DataTypeMap implements IDataType {
 
     @Override
     public int sqlTypeId() {
-        return Types.STRUCT;
+        return Types.ARRAY;
+    }
+
+    @Override
+    public int sqlTypeTypeId() {
+        return 1;
     }
 
     @Override
@@ -122,17 +124,7 @@ public class DataTypeMap implements IDataType {
         if (!readData) {
             return new ClickHouseArray[0];
         }
-        final ClickHouseArray[] result = new ClickHouseArray[rows];
-        Object [] offsets = offsetType.deserializeBinaryBulk(rows, deserializer);
-        int lastReadOffset = 0;
-        for (int row = 0; row < rows; row++) {
-            final int offset = ((BigInteger) offsets[row]).intValue();
-            result[row] = new ClickHouseArray(dataTypeTuple,
-                    dataTypeTuple.deserializeBinaryBulk(
-                            offset - lastReadOffset, deserializer));
-            lastReadOffset = offset;
-        }
-        return result;
+        return nested.deserializeBinaryBulk(rows, deserializer);
     }
 
     @Override
@@ -140,7 +132,7 @@ public class DataTypeMap implements IDataType {
         return null;
     }
 
-    public DataTypeTuple getDataTypeTuple() {
-        return dataTypeTuple;
+    public DataTypeArray arrayType() {
+        return nested;
     }
 }

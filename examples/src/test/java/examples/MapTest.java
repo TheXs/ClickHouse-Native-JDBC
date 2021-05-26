@@ -1,8 +1,13 @@
 package examples;
 
+import com.github.housepower.jdbc.ClickHouseArray;
 import com.github.housepower.jdbc.ClickHouseStruct;
+import com.github.housepower.jdbc.data.IDataType;
+import com.github.housepower.jdbc.data.type.complex.DataTypeString;
+import com.github.housepower.jdbc.data.type.complex.DataTypeTuple;
 import org.junit.jupiter.api.Test;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,7 +24,7 @@ public class MapTest {
             final PreparedStatement prepareStatement = connection.prepareStatement("select kv from map");
             final ResultSet resultSet = prepareStatement.executeQuery();
             while (resultSet.next()) {
-                Object dataMap = resultSet.getObject(1);
+                Object dataMap = resultSet.getObject("kv");
                 System.out.println(dataMap);
             }
         } catch (Exception e) {
@@ -39,7 +44,14 @@ public class MapTest {
             final PreparedStatement prepareStatement =
                     connection.prepareStatement(
                             "insert into map values(?)");
-            prepareStatement.setObject(1, struct);
+            prepareStatement.setObject(1,
+                    new ClickHouseArray(new DataTypeTuple("Tuple",
+                            new IDataType[]{new DataTypeString(StandardCharsets.UTF_8),
+                                    new DataTypeString(StandardCharsets.UTF_8)}),
+                            new ClickHouseStruct[]{
+                                    new ClickHouseStruct("Tuple(String,String)", data[0]),
+                                    new ClickHouseStruct("Tuple(String,String)", data[1])
+                            }));
             final int effectCnt = prepareStatement.executeUpdate();
             System.out.println(effectCnt);
         } catch (Exception e) {
@@ -79,7 +91,14 @@ public class MapTest {
                     connection.prepareStatement(
                             "insert into map values(?)");
             for (Object[][] data : dataList) {
-                prepareStatement.setObject(1, new ClickHouseStruct("Map", data));
+                final ClickHouseStruct[] tupleArr = new ClickHouseStruct[data.length];
+                for (int i = 0; i < data.length; i++) {
+                    tupleArr[i] = new ClickHouseStruct("Tuple(String,String)", data[i]);
+                }
+                prepareStatement.setObject(1,
+                        new ClickHouseArray(new DataTypeTuple("Tuple(String,String)",
+                                new IDataType[]{new DataTypeString(StandardCharsets.UTF_8),
+                                        new DataTypeString(StandardCharsets.UTF_8)}), tupleArr));
                 prepareStatement.addBatch();
             }
             final int[] effectCntArr = prepareStatement.executeBatch();

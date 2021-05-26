@@ -14,7 +14,6 @@
 
 package com.github.housepower.jdbc.data.type.complex;
 
-import com.github.housepower.jdbc.connect.NativeContext;
 import com.github.housepower.jdbc.data.IDataType;
 import com.github.housepower.jdbc.misc.SQLLexer;
 import com.github.housepower.jdbc.serde.BinaryDeserializer;
@@ -27,12 +26,12 @@ import java.sql.Types;
 
 public class DataTypeString implements IDataType {
 
-    public static DataTypeCreator CREATOR = (lexer, serverContext) -> new DataTypeString(serverContext);
+    public static DataTypeCreator CREATOR = (lexer, serverContext) -> new DataTypeString(serverContext.getConfigure().charset());
 
     private final Charset charset;
 
-    public DataTypeString(NativeContext.ServerContext serverContext) {
-        this.charset = serverContext.getConfigure().charset();
+    public DataTypeString(final Charset charset) {
+        this.charset = charset;
     }
 
     @Override

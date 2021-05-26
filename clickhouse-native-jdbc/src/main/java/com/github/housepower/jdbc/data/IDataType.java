@@ -30,6 +30,10 @@ public interface IDataType {
 
     int sqlTypeId();
 
+    default int sqlTypeTypeId() {
+        return 0;
+    }
+
     Object defaultValue();
 
     Class javaType();
