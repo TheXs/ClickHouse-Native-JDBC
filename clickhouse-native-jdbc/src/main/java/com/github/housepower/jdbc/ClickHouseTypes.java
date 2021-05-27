@@ -9,5 +9,5 @@ public class ClickHouseTypes {
     /**
      * 表示其使用 JDBC type
      */
-    public final static int MAP = 0;
+    public final static int MAP = 1;
 }
